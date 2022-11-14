@@ -5,7 +5,8 @@ import os
 
 class Image():
     def __init__(self, img, img_name):
-        self.img = img
+        self.img = cv.imread(img)
+        self.filename = img
         self.name = img_name
         self.reference_pts = []
         
@@ -24,12 +25,12 @@ class Image():
         newcameramtx, roi = cv.getOptimalNewCameraMatrix(
             camera_matrix, dist_coeffs, (w,h), 1, (w,h)
         )
-        dst = cv.undistort(self.img, self.mtx, self.dist, None, newcameramtx)
+        dst = cv.undistort(self.img, camera_matrix, dist_coeffs, None, newcameramtx)
         
         if crop:
             x, y, w, h = roi
             dst = dst[y:y+h, x:x+w]
-        
+         
         self.img = dst
 
 

@@ -5,11 +5,20 @@ import matplotlib.pyplot as plt
 import sys
 
 class InversePerspectiveMapping():
-    def __init__(self, source_image, destination_image, output_directory):
-        self.source_image = Image(source_image, 'source_image')
-        self.destination_image = Image(destination_image, 'destination_image')
+    def __init__(self):
         self.output_image = None
-        self.output_directory = output_directory
+        self.output_directory = None
+        self.source_image = None
+        self.destination_image = None
+
+    def set_source_img(self, filename):
+        self.source_image = Image(filename, 'source_image')
+
+    def set_destination_img(self, filename):
+        self.destination_image = Image(filename, 'destination_image')
+
+    def set_output_directory(self, dir):
+        self.output_directory = dir
 
     def write_reference_pts(self):
         print('save reference pts')
