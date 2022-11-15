@@ -2,11 +2,11 @@ from src.utils.Camera import CameraCalibration
 from src.utils.InversePerspectiveMapping import InversePerspectiveMapping
 from src.utils.Image import Image
 import cv2 as cv
-import sys
+import sys, os
 import numpy as np
 from PySide6 import QtCore, QtWidgets, QtGui
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QLabel, QFormLayout, QPushButton, QTabWidget, QGridLayout, QVBoxLayout, QMainWindow, QLineEdit, QGroupBox, QHBoxLayout, QCheckBox, QMenu, QSizePolicy
+from PySide6.QtWidgets import QWidget, QLabel, QFormLayout, QPushButton, QTabWidget, QGridLayout, QVBoxLayout, QMainWindow, QLineEdit, QGroupBox, QHBoxLayout, QCheckBox, QMenu, QSizePolicy, QInputDialog
 from PySide6.QtGui import QPixmap, QImage, qRgb, QColor, QPainter, QPen
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
@@ -48,9 +48,11 @@ class MyDynamicMplCanvas(MyMPLCanvas):
         self.axes.imshow(img.img)
 
     def on_press(self, event):
+        # extra: number for the pts 
         if event.key == 'x':
             self.axes.plot(event.xdata, event.ydata, marker='x', markersize=12)
             self.reference_pts.append((event.xdata, event.ydata))
+            self.axes.text(event.xdata, event.ydata, len(self.reference_pts))
         self.draw()
 
 
@@ -83,7 +85,10 @@ class SetReferencePtsWindow(QMainWindow):
         self.dc2 = MyDynamicMplCanvas(self.main_widget, width=5, height=4, dpi=100, img=self.destination_img)
         #l.addWidget(sc)
         l.addWidget(self.dc1)
+        l.addWidget(NavigationToolbar2QT(self.dc1, self))
         l.addWidget(self.dc2)
+        l.addWidget(NavigationToolbar2QT(self.dc2, self))
+
 
         btn_run_ipm = QPushButton("Run IPM")
         btn_run_ipm.clicked.connect(self.btn_run_ipm_handler)
@@ -110,13 +115,40 @@ class SetReferencePtsWindow(QMainWindow):
     def btn_run_ipm_handler(self):
         self.source_img.reference_pts = self.dc1.reference_pts
         self.destination_img.reference_pts = self.dc2.reference_pts
-        self.output_img = self.transform_img(self.source_img, self.destination_img)
+        output_img = self.transform_img(self.source_img, self.destination_img)
+        self.output_img = cv.cvtColor(output_img, cv.COLOR_BGR2RGB)
         cv.imshow('img', self.output_img)
         cv.waitKey(0)
         cv.destroyAllWindows()
 
     def btn_save_ipm_handler(self):
-        pass
+        output_dir = self._ask_for_destination_folder()
+        self._make_output_dir(output_dir)
+        self._save_images(output_dir)
+        self._save_reference_pts(output_dir)
+
+    def _ask_for_destination_folder(self):
+        dir, ok = QInputDialog().getText(self, "Output directory", "Enter output directory:") #TBD
+        if ok:
+            dir = './outputs/' + dir
+            return dir
+
+    def _make_output_dir(self, dir):
+        if(not os.path.exists(dir)):
+            os.mkdir(dir)
+        else:
+            # handle it
+            pass
+
+    def _save_images(self, dir):
+        self.source_img.save(dir)
+        self.destination_img.save(dir)
+        cv.imwrite(dir+'/output_image.jpg', self.output_img)
+
+    def _save_reference_pts(self, dir):
+        self.source_img.write_reference_pts(dir)
+        self.destination_img.write_reference_pts(dir)
+
 
 
     def transform_img(self, source_img, destination_img):

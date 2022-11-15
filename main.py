@@ -39,7 +39,6 @@ class MainWindow(QMainWindow): # TODO Not main window but ipm
         self.layout.addWidget(self.btn_run_calibration)
 
     def btn_set_reference_pts_handler(self):
-        # The Problem noob... TODO 
         source_img = self.source_camera.image
         destination_img = self.destination_camera.image
         self.w = SetReferencePtsWindow(source_img, destination_img)
@@ -54,7 +53,6 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication([])
 
     widget = MainWindow()
-    widget.resize(800, 600)
     widget.show()
 
     sys.exit(app.exec())

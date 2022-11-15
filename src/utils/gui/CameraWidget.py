@@ -4,6 +4,7 @@ from PySide6 import QtCore, QtWidgets, QtGui
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QLabel, QFormLayout, QPushButton, QTabWidget, QGridLayout, QVBoxLayout, QMainWindow, QLineEdit, QGroupBox, QHBoxLayout, QCheckBox, QMenu, QSizePolicy
 from PySide6.QtGui import QPixmap, QImage, qRgb, QColor, QPainter, QPen
+import numpy as np
 
 # TODO undistort etc.
 
@@ -22,9 +23,8 @@ class CameraWidget(QWidget):
         self.init_layout()
         label_camera_name = QLabel(self.camera_name)
         self.left.addWidget(label_camera_name)
-        self.left.addWidget(self.btn_load_configuration)
         self.left.addWidget(self.btn_load_image)
-        self.left.addWidget(self.chk_undistort)
+        self.left.addWidget(self.btn_load_configuration)
         self.left.addWidget(self.chk_crop)
         self.left.addWidget(self.configuration_preview)
         #self.left.addStretch()
@@ -42,11 +42,11 @@ class CameraWidget(QWidget):
 
 
     def init_buttons(self):
-        self.btn_load_configuration = QPushButton("Load configuration")
+        self.btn_load_configuration = QPushButton("Undistort Image with calibration file...")
         self.btn_load_configuration.clicked.connect(self.btn_load_configuration_handler)
+        self.btn_load_configuration.setEnabled(False)
         self.btn_load_image = QPushButton("Load Image")
         self.btn_load_image.clicked.connect(self.btn_load_image_handler)
-        self.chk_undistort = QCheckBox("Undistort")
         self.chk_crop = QCheckBox("Crop")
 
     def btn_load_image_handler(self):
@@ -54,20 +54,22 @@ class CameraWidget(QWidget):
         if filename:
             self._load_image(filename)
             self._update_preview_window()
+            self.btn_load_configuration.setEnabled(True)
 
     def btn_load_configuration_handler(self):
         filename = self._ask_for_filename('*.json')
         mtx, dist = self._get_camera_calibration(filename)
         self.configuration_preview.update_text(f'camera calibrated. {filename.split("/")[-1]}', 'green')
-        self._undistort_image(mtx, dist, crop=True)
+        self._undistort_image(mtx, dist, crop=self.chk_crop.isChecked())
         print('undistorted')
         self._update_preview_window()
+        self.btn_load_configuration.setEnabled(False)
 
     def _load_image(self, filename):
         self.image = Image(filename, self.camera_name)
 
     def _update_preview_window(self):
-        self.image_preview.update(self.image.filename)
+        self.image_preview.update(self.image.img) 
         print('updated')
 
     def _ask_for_filename(self, datatype='*'):
@@ -106,8 +108,15 @@ class _image_preview(QWidget):
         self.grid.addWidget(self.helper_label, 1, 1)
         self.setLayout(self.grid)
 
-    def update(self, filename):
-        self.img = QPixmap(filename)
+    def update(self, image):
+        image = np.ascontiguousarray(image)
+        height, width, channel = image.shape
+        bytesPerLine = 3 * width
+        image = QtGui.QImage(image.data, width, height,
+            bytesPerLine, QImage.Format.Format_RGB888)
+        self.img = QtGui.QPixmap(image)
+
+        #self.img = QPixmap(filename)
         self.img = self.img.scaledToWidth(self.width)
         self.helper_label.setPixmap(self.img)
         self.setLayout(self.grid)

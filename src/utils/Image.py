@@ -5,7 +5,8 @@ import os
 
 class Image():
     def __init__(self, img, img_name):
-        self.img = cv.imread(img)
+        img = cv.imread(img)
+        self.img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         self.filename = img
         self.name = img_name
         self.reference_pts = []
@@ -13,12 +14,20 @@ class Image():
     def draw(self):
         for pt in self.reference_pts:
             cv.circle(self.img, (int(pt[0]), int(pt[1])), 2, (0, 0, 255), 2)
-        cv.imshow('img', self.img)
+        img = cv.cvtColor(self.img, cv.COLOR_RGB2BGR)
+        cv.imshow('img', img)
         cv.waitKey(0)
+
+    def _draw_reference_pts(self):
+        for pt in self.reference_pts:
+            cv.circle(self.img, (int(pt[0]), int(pt[1])), 2, (255, 0, 0), 2)
+        
 
     def save(self, dir):
         filename = os.path.join(dir, 'image_'+self.name+'.jpg')
-        cv.imwrite(filename, self.img)
+        self._draw_reference_pts()
+        img = cv.cvtColor(self.img, cv.COLOR_RGB2BGR)
+        cv.imwrite(filename, img)
 
     def undistort(self, camera_matrix, dist_coeffs, crop=False):
         h, w = self.img.shape[:2]
