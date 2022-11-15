@@ -1,19 +1,15 @@
-from src.utils.Camera import CameraCalibration
-from src.utils.InversePerspectiveMapping import InversePerspectiveMapping
-from src.utils.Image import Image
 import cv2 as cv
-import sys, os
+import os
 import numpy as np
-from PySide6 import QtCore, QtWidgets, QtGui
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QLabel, QFormLayout, QPushButton, QTabWidget, QGridLayout, QVBoxLayout, QMainWindow, QLineEdit, QGroupBox, QHBoxLayout, QCheckBox, QMenu, QSizePolicy, QInputDialog
-from PySide6.QtGui import QPixmap, QImage, qRgb, QColor, QPainter, QPen
+from PySide6 import QtCore, QtGui
+from PySide6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QMainWindow, QMenu, QSizePolicy, QInputDialog, QMessageBox
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
-from src.utils.gui.CameraWidget import CameraWidget
 
-
+# TODO Error handling ...
 # TODO Hier aufraumen, dann save reference pts, images, etc.
+# TODO ERROR if <4 pts
+# TODO if infocus red border
 
 class MyMPLCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100, img=''):
@@ -29,12 +25,6 @@ class MyMPLCanvas(FigureCanvasQTAgg):
     def compute_initial_figure(self, img):
         pass
 
-
-class MyStaticMplCanvas(MyMPLCanvas):
-    def compute_initial_figure(self, img):
-        #img = cv.imread(img)
-        self.axes.imshow(img.img)
-
 class MyDynamicMplCanvas(MyMPLCanvas):
     def __init__(self, *args, **kwargs):
         MyMPLCanvas.__init__(self, *args, **kwargs)
@@ -48,11 +38,13 @@ class MyDynamicMplCanvas(MyMPLCanvas):
         self.axes.imshow(img.img)
 
     def on_press(self, event):
-        # extra: number for the pts 
         if event.key == 'x':
             self.axes.plot(event.xdata, event.ydata, marker='x', markersize=12)
             self.reference_pts.append((event.xdata, event.ydata))
             self.axes.text(event.xdata, event.ydata, len(self.reference_pts))
+        if event.key == 'r':
+            self.axes.lines[-1].remove()
+            del_el = self.reference_pts.pop()
         self.draw()
 
 
@@ -80,22 +72,27 @@ class SetReferencePtsWindow(QMainWindow):
 
         self.main_widget = QWidget(self)
 
-        l = QVBoxLayout(self.main_widget)
+        l1 = QHBoxLayout(self.main_widget)
+        l12 = QVBoxLayout()
+        l22 = QVBoxLayout()
+        l1.addLayout(l12)
+        l1.addLayout(l22)
+        
         self.dc1 = MyDynamicMplCanvas(self.main_widget, width=5, height=4, dpi=100, img=self.source_img)
         self.dc2 = MyDynamicMplCanvas(self.main_widget, width=5, height=4, dpi=100, img=self.destination_img)
         #l.addWidget(sc)
-        l.addWidget(self.dc1)
-        l.addWidget(NavigationToolbar2QT(self.dc1, self))
-        l.addWidget(self.dc2)
-        l.addWidget(NavigationToolbar2QT(self.dc2, self))
+        l12.addWidget(self.dc1)
+        l12.addWidget(NavigationToolbar2QT(self.dc1, self))
+        l22.addWidget(self.dc2)
+        l22.addWidget(NavigationToolbar2QT(self.dc2, self))
 
 
         btn_run_ipm = QPushButton("Run IPM")
         btn_run_ipm.clicked.connect(self.btn_run_ipm_handler)
         btn_save_ipm = QPushButton("Save IPM")
         btn_save_ipm.clicked.connect(self.btn_save_ipm_handler)
-        l.addWidget(btn_run_ipm)
-        l.addWidget(btn_save_ipm)
+        l12.addWidget(btn_run_ipm)
+        l22.addWidget(btn_save_ipm)
 
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
@@ -113,15 +110,39 @@ class SetReferencePtsWindow(QMainWindow):
         QtGui.QMessageBox.about(self, "About", "test")
 
     def btn_run_ipm_handler(self):
-        self.source_img.reference_pts = self.dc1.reference_pts
-        self.destination_img.reference_pts = self.dc2.reference_pts
-        output_img = self.transform_img(self.source_img, self.destination_img)
-        self.output_img = cv.cvtColor(output_img, cv.COLOR_BGR2RGB)
+        ok = self._run_ipm()
+        if not ok:
+            return 
         cv.imshow('img', self.output_img)
         cv.waitKey(0)
         cv.destroyAllWindows()
 
+    def _run_ipm(self):
+        if(not self._enough_reference_pts()):
+            self._show_error_box("Not enough reference points! Need at least 4 for each image.")
+            return False
+        self.source_img.reference_pts = self.dc1.reference_pts
+        self.destination_img.reference_pts = self.dc2.reference_pts
+        output_img = self.transform_img(self.source_img, self.destination_img)
+        self.output_img = cv.cvtColor(output_img, cv.COLOR_BGR2RGB)
+        return True
+
+    def _enough_reference_pts(self):
+        if len(self.dc1.reference_pts) < 4 or len(self.dc2.reference_pts) < 4:
+            return False
+        return True
+            
+    def _show_error_box(self, text):
+        dlg = QMessageBox(self)
+        dlg.setText(text)
+        dlg.setIcon(QMessageBox.Warning)
+        dlg.exec_()
+
+
     def btn_save_ipm_handler(self):
+        ok = self._run_ipm()
+        if not ok:
+            return
         output_dir = self._ask_for_destination_folder()
         self._make_output_dir(output_dir)
         self._save_images(output_dir)

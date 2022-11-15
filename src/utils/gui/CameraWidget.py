@@ -1,12 +1,31 @@
 from src.utils.Camera import CameraCalibration
 from src.utils.Image import Image
-from PySide6 import QtCore, QtWidgets, QtGui
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QLabel, QFormLayout, QPushButton, QTabWidget, QGridLayout, QVBoxLayout, QMainWindow, QLineEdit, QGroupBox, QHBoxLayout, QCheckBox, QMenu, QSizePolicy
-from PySide6.QtGui import QPixmap, QImage, qRgb, QColor, QPainter, QPen
+from PySide6 import QtWidgets, QtGui
+from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QGridLayout, QVBoxLayout, QHBoxLayout, QCheckBox
+from PySide6.QtGui import QPixmap, QImage
+from PySide6 import QtCore
 import numpy as np
 
-# TODO undistort etc.
+HEADING_STYLE = "background-color: DarkRed; \
+                color: white; \
+                border-radius: 10px; \
+                font: bold 14px; \
+                min-width: 10em; \
+                padding: 6px;"
+
+
+class Header(QWidget):
+    def __init__(self, text):
+        super().__init__()
+        self.label = QLabel(text)
+        self.label.setStyleSheet(HEADING_STYLE)
+        self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        # Show
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.label)
+        self.setLayout(vbox)
+
+
 
 class CameraWidget(QWidget):
     def __init__(self, camera_name):
@@ -17,18 +36,18 @@ class CameraWidget(QWidget):
 
     def init_ui(self):
         self.init_buttons()
+        self.header = Header(self.camera_name)
         self.image_preview = _image_preview()
-        self.configuration_preview = _status_preview('Camera Not Calibrated yet.', 'red')
+        self.configuration_preview = _status_preview('Camera Not Calibrated yet.', 'DarkRed')
         # Layout
         self.init_layout()
-        label_camera_name = QLabel(self.camera_name)
-        self.left.addWidget(label_camera_name)
         self.left.addWidget(self.btn_load_image)
         self.left.addWidget(self.btn_load_configuration)
         self.left.addWidget(self.chk_crop)
         self.left.addWidget(self.configuration_preview)
-        #self.left.addStretch()
+        self.left.addStretch()
         self.right.addWidget(self.image_preview)
+        self.right.addStretch()
         self.setLayout(self.main)
 
     def init_layout(self):
@@ -36,6 +55,7 @@ class CameraWidget(QWidget):
         self.content = QHBoxLayout()
         self.left = QVBoxLayout()
         self.right = QVBoxLayout()
+        self.main.addWidget(self.header)
         self.main.addLayout(self.content)
         self.content.addLayout(self.left)
         self.content.addLayout(self.right)
@@ -95,7 +115,7 @@ class CameraWidget(QWidget):
         
 
 class _image_preview(QWidget):
-    def __init__(self, width=320): 
+    def __init__(self, width=200): 
         super().__init__()
         self.width = width
         self.img = QPixmap('assets/image-preview.png')
@@ -129,6 +149,7 @@ class _status_preview(QWidget):
         # Show
         vbox = QVBoxLayout()
         vbox.addWidget(self.label)
+        vbox.addStretch()
         self.setLayout(vbox)
 
     def init_ui(self, text, color):
