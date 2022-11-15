@@ -5,48 +5,25 @@ from PySide6 import QtCore, QtGui
 from PySide6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QMainWindow, QMenu, QSizePolicy, QInputDialog, QMessageBox
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
+from src.utils.gui.ImagePlot import ImagePlot
+import json
+
+# DOUBLE! Remove and import!
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
 
 # TODO Error handling ...
 # TODO Hier aufraumen, dann save reference pts, images, etc.
 # TODO ERROR if <4 pts
 # TODO if infocus red border
-
-class MyMPLCanvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=5, height=4, dpi=100, img=''):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
-        self.compute_initial_figure(img)
-        FigureCanvasQTAgg.__init__(self, fig)
-        self.setParent(parent)
-        FigureCanvasQTAgg.setSizePolicy(self, QSizePolicy.Expanding,
-                                            QSizePolicy.Expanding)
-        FigureCanvasQTAgg.updateGeometry(self)
-
-    def compute_initial_figure(self, img):
-        pass
-
-class MyDynamicMplCanvas(MyMPLCanvas):
-    def __init__(self, *args, **kwargs):
-        MyMPLCanvas.__init__(self, *args, **kwargs)
-        self.reference_pts = []
-        self.setFocusPolicy( QtCore.Qt.ClickFocus )
-        self.setFocus()
-        cid = self.mpl_connect('key_press_event', self.on_press)
-
-    def compute_initial_figure(self, img):
-        #img = cv.imread(img)
-        self.axes.imshow(img.img)
-
-    def on_press(self, event):
-        if event.key == 'x':
-            self.axes.plot(event.xdata, event.ydata, marker='x', markersize=12)
-            self.reference_pts.append((event.xdata, event.ydata))
-            self.axes.text(event.xdata, event.ydata, len(self.reference_pts))
-        if event.key == 'r':
-            self.axes.lines[-1].remove()
-            del_el = self.reference_pts.pop()
-        self.draw()
-
 
 class SetReferencePtsWindow(QMainWindow):
     def __init__(self, source_img, destination_img):  
@@ -78,8 +55,8 @@ class SetReferencePtsWindow(QMainWindow):
         l1.addLayout(l12)
         l1.addLayout(l22)
         
-        self.dc1 = MyDynamicMplCanvas(self.main_widget, width=5, height=4, dpi=100, img=self.source_img)
-        self.dc2 = MyDynamicMplCanvas(self.main_widget, width=5, height=4, dpi=100, img=self.destination_img)
+        self.dc1 = ImagePlot(self.main_widget, width=5, height=4, dpi=100, img=self.source_img)
+        self.dc2 = ImagePlot(self.main_widget, width=5, height=4, dpi=100, img=self.destination_img)
         #l.addWidget(sc)
         l12.addWidget(self.dc1)
         l12.addWidget(NavigationToolbar2QT(self.dc1, self))
@@ -123,8 +100,9 @@ class SetReferencePtsWindow(QMainWindow):
             return False
         self.source_img.reference_pts = self.dc1.reference_pts
         self.destination_img.reference_pts = self.dc2.reference_pts
-        output_img = self.transform_img(self.source_img, self.destination_img)
+        output_img, h = self.transform_img(self.source_img, self.destination_img)
         self.output_img = cv.cvtColor(output_img, cv.COLOR_BGR2RGB)
+        self.h = h
         return True
 
     def _enough_reference_pts(self):
@@ -147,6 +125,10 @@ class SetReferencePtsWindow(QMainWindow):
         self._make_output_dir(output_dir)
         self._save_images(output_dir)
         self._save_reference_pts(output_dir)
+        self._save_homography_matrix(output_dir)
+
+    def _save_homography_matrix(self, dir):
+        json.dump(self.h, open(dir + '/homography_matrix.json', "w"), cls=NpEncoder)
 
     def _ask_for_destination_folder(self):
         dir, ok = QInputDialog().getText(self, "Output directory", "Enter output directory:") #TBD
@@ -180,4 +162,4 @@ class SetReferencePtsWindow(QMainWindow):
         size = (destination_img.img.shape[1], destination_img.img.shape[0])
         # FAIL TODO I need now Imagename to load for image
         output_image = cv.warpPerspective(source_img.img, h, size)
-        return output_image
+        return output_image, h

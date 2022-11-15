@@ -21,8 +21,8 @@ class MainWindow(QMainWindow):
         self._populate_layout()
 
     def _init_widgets(self):
-        self.source_camera = CameraWidget("Source Camera")
-        self.destination_camera = CameraWidget("Destination Camera")
+        self.source_camera = CameraWidget("souce_camera")
+        self.destination_camera = CameraWidget("destination_camera")
 
     def _init_buttons(self):
         self.btn_set_reference_pts = QPushButton("Set Reference Points")
@@ -33,10 +33,11 @@ class MainWindow(QMainWindow):
         self.btn_evaluate_ipm.clicked.connect(self.btn_evaluate_ipm_handler)
 
     def btn_evaluate_ipm_handler(self):
+        self.newwindow = EvaluationWidget()
+        self.newwindow.show()
         # Load IPM Folder
         # Set Evaluation Points
         # Calculate Error (in realtime?)
-        pass
 
     def _populate_layout(self):
         self.layout.addWidget(self.source_camera)
@@ -49,10 +50,13 @@ class MainWindow(QMainWindow):
         self.layout = QVBoxLayout()
 
     def btn_set_reference_pts_handler(self):
-        if(not self._images_are_set()):
-            self._show_error_box("Error, images are not set yet.")
-        self.newwindow = SetReferencePtsWindow(self.source_camera.image, self.destination_camera.image)
-        self.newwindow.show()
+        try:
+            if(not self._images_are_set()):
+                raise Exception("Error, images are not set yet.")
+            self.newwindow = SetReferencePtsWindow(self.source_camera.image, self.destination_camera.image)
+            self.newwindow.show()
+        except Exception as e:
+            _show_error_box(str(e))
 
     def btn_run_calibration_handler(self):
         self.newwindow = CalibrationWidget()
@@ -61,8 +65,8 @@ class MainWindow(QMainWindow):
     def _images_are_set(self):
         return True if self.source_camera.image and self.destination_camera.image else False
 
-    def _show_error_box(self, text):
-        dlg = QMessageBox(self)
-        dlg.setText(text)
-        dlg.setIcon(QMessageBox.Warning)
-        dlg.exec_()
+def _show_error_box(text):
+    dlg = QMessageBox()
+    dlg.setText(text)
+    dlg.setIcon(QMessageBox.Warning)
+    dlg.exec_()
