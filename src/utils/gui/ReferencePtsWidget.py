@@ -160,6 +160,5 @@ class SetReferencePtsWindow(QMainWindow):
             np.array([destination_img.reference_pts])
         )
         size = (destination_img.img.shape[1], destination_img.img.shape[0])
-        # FAIL TODO I need now Imagename to load for image
         output_image = cv.warpPerspective(source_img.img, h, size)
         return output_image, h
