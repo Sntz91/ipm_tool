@@ -3,9 +3,8 @@ import os
 import numpy as np
 from PySide6 import QtCore, QtGui
 from PySide6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QMainWindow, QMenu, QSizePolicy, QInputDialog, QMessageBox
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
-from src.utils.gui.ImagePlot import ImagePlot
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
+from gui.ImagePlot import ImagePlot
 import json
 
 # DOUBLE! Remove and import!

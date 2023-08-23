@@ -1,10 +1,6 @@
 import sys
 from PySide6 import QtWidgets
-from src.utils.gui.MainWindow import MainWindow
-
-# TODO1: Error Handling
-# TODO2: Evaluation
-# TODO3: Refactor
+from gui.MainWindow import MainWindow
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])

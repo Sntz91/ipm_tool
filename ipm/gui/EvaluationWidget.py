@@ -1,32 +1,7 @@
-import cv2 as cv
-import os
 import numpy as np
-from PySide6 import QtCore, QtGui
 from PySide6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QMainWindow, QMenu, QSizePolicy, QInputDialog, QMessageBox, QLabel
-from matplotlib.figure import Figure
-from PySide6 import QtWidgets, QtGui
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
-from src.utils.Image import Image
-from src.utils.gui.ImagePlot import ImagePlot
-import json
-
-#Vererbung ReferencePts und Evaluation?
-# Beide setzen Pts -> SetPtWidget oder CompareImagesWidget
-
-# Dont forget, You already Have Homography Matrix H !! 
-# Hence calculate error:
-#   Set Point on Destinaton Image
-#   Set Point on Source Image
-#   pt1 = point that has been set in Destinaton image
-#   pt2 = H * Point that has been set in Source Image
-#   Calculate distance (pt1, pt2) - as pt1 and pt2 should now have same coordinates --> in pixel
-#   n mal -> RMSE --> in pixel
-#   [[[pixel zu Meter umrechnen (Durch landmarken im destination img)]]] pixel-scale-factor
-
-
-###### This means i need so save H!
-
-
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
+from gui.ImagePlot import ImagePlot
 
 class SetComparisonPointWidget(QWidget):
     def __init__(self):
@@ -36,9 +11,6 @@ class SetComparisonPointWidget(QWidget):
 class EvaluationWidget(QWidget):
     def __init__(self, source_image, destination_image, output_image, h):
         super().__init__()
-        # All this must be another class TODO
-        #self.source_image = ImagePlot(img=Image('Datasets/Dataset_1/Canon_550D/Images/c1/IMG_1241.JPG', 'source_image'))
-        #self.destination_image = ImagePlot(img=Image('Datasets/Dataset_1/Canon_550D/Images/c1/IMG_1241.JPG', 'destination_image'))
         self.source_image = ImagePlot(img=source_image)
         self.destination_image = ImagePlot(img=destination_image)
         self.output_image = output_image

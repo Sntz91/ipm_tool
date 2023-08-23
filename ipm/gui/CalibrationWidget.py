@@ -1,4 +1,4 @@
-from src.utils.Camera import CameraCalibration
+from utilities.Camera import CameraCalibration
 from PySide6 import QtWidgets
 from PySide6.QtWidgets import QWidget, QLabel, QFormLayout, QPushButton, QVBoxLayout, QLineEdit 
 

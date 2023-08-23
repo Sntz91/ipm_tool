@@ -1,3 +1,4 @@
 Datasets/**
 venv/**
-outputs/**
+outputs/*/**
+**/__pycache__/**

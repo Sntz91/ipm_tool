@@ -1,8 +1,7 @@
-from re import A
 import numpy as np
 import cv2 as cv
 import glob
-import os, json
+import json
 from collections import namedtuple
 
 CalibrationMatrix = namedtuple('CalibrationMatrix', ['ret', 'mtx', 'dist', 'rvecs', 'tvecs'])

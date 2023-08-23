@@ -1,9 +1,9 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QMainWindow, QMessageBox, QFileDialog
-from src.utils.gui.CameraWidget import CameraWidget
-from src.utils.gui.ReferencePtsWidget import SetReferencePtsWindow
-from src.utils.gui.CalibrationWidget import CalibrationWidget
-from src.utils.gui.EvaluationWidget import EvaluationWidget
-from src.utils.Image import Image
+from gui.CameraWidget import CameraWidget
+from gui.ReferencePtsWidget import SetReferencePtsWindow
+from gui.CalibrationWidget import CalibrationWidget
+from gui.EvaluationWidget import EvaluationWidget
+from utilities.Image import Image
 import json
 import numpy as np
 

@@ -1,5 +1,5 @@
-from src.utils.Camera import CameraCalibration
-from src.utils.Image import Image
+from utilities.Camera import CameraCalibration
+from utilities.Image import Image
 from PySide6 import QtWidgets, QtGui
 from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QGridLayout, QVBoxLayout, QHBoxLayout, QCheckBox
 from PySide6.QtGui import QPixmap, QImage
@@ -118,7 +118,7 @@ class _image_preview(QWidget):
     def __init__(self, width=200): 
         super().__init__()
         self.width = width
-        self.img = QPixmap('assets/image-preview.png')
+        self.img = QPixmap('images/image-preview.png')
         self.img = self.img.scaledToWidth(self.width)
 
         self.helper_label = QLabel()
